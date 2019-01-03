@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+</head>
+
+<body>
+    <button type="button" class="btn btn-primary" name="button" onclick="setNotification()">
+        SendNotification
+    </button>
+    <button type="button" class="btn btn-primary" name="button" onclick="userlist()">
+        Get users
+    </button>
+    <p>Users Online</p>
+    <h1 id="customClient"></h1>
+    <script>
+        var socket = io();
+
+        socket.on('show_notification',function(data){
+            showDesktopNotification(data.title,data.message,data.icon);
+        });
+
+        socket.on('list',function(list){  
+            for (var item in list){
+                var btn = document.createElement("BUTTON");      
+                var t = document.createTextNode('Send Notification to : ' + list[item]);   
+                btn.appendChild(t);        
+                var stringfunction = 'sendsocket(\''+list[item]+'\');';
+                btn.setAttribute('onclick', stringfunction);
+                btn.setAttribute('class',"btn btn-block btn-warning")
+                document.body.appendChild(btn);
+            }
+        });
+
+        socket.on('sendToclient',function(){
+            document.getElementById('customClient').innerHTML = 'This message is just for ME!';
+
+        });
+
+        function setNotification(){
+            showDesktopNotification('Lokesh','Desktop Notification..!','/index.jpeg');
+            sendNodeNotification('Lokesh','Browser Notification..!','/index.jpeg');
+        }
+
+        var Notification = window.Notification || window.mozNotification || window.webkitNotification;
+            Notification.requestPermission(function(permission){
+        });
+
+        function requestNotificationPermissions(){
+            if(Notification.permission !== 'denied'){
+                Notification.requestPermission(function(permission){
+
+                });
+            }
+        }
+
+        function showDesktopNotification(message,body,icon,sound,timeout){
+            if(!timeout){
+                timeout=4000;
+            }
+            requestNotificationPermissions();
+            var instance = new Notification(
+                message,{
+                    body:body,
+                    icon:icon,
+                    sound:sound
+                }
+            );
+
+            if(sound){
+                instance.sound;
+            }
+            setTimeout(instance.close.bind(instance),timeout);
+            return false;
+        }
+
+        function sendNodeNotification(title,message,icon){
+            socket.emit('new_notification',{
+                message:message,
+                title:title,
+                icon:icon,
+            });
+        }
+
+        function userlist(){
+            socket.emit('getusers')
+        }
+
+        function sendsocket(socketid){
+            socket.emit('specificClient',socketid)
+        }
+
+    </script>
+</body>
+</html>
